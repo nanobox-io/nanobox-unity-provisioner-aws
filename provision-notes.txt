@@ -1,0 +1,22 @@
+============ Env ================
+
+Create VPC
+Create internet gateway
+Create network ACLs:
+  DMZ
+  MGZ
+  APZ
+  
+  CreateNetworkAcl
+  DescribeNetworkAcls
+  CreateNetworkAclEntry
+  DeleteNetworkAclEntry
+  
+  ReplaceNetworkAclAssociation
+  
+============ Zone ================
+
+Create subnet
+Attach internet gateway
+Attach ACL
+Create IAM profile/user

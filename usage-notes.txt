@@ -1,0 +1,43 @@
+================ Provisioner ==================
+
+Scope: desktop, ec2
+
+Actions:
+  deploy-env
+    name: nanobox
+    
+  deploy-zone
+    name: APZ, APZ-production, APZ-staging, APZ-<TEAM>
+    
+  deploy-vpn (DMZ)
+  
+  deploy-controller (MGZ)
+
+================ VPN ==================
+
+Roles:
+  superadmin: SSH, everything
+  admin: console, tunnel, push, http
+  dev: push, http
+  view: http
+  
+Actions:
+  add-user
+    name
+    email
+    ...
+    
+  add-zone
+    name
+    subnet
+    
+  add-zone APZ-production 10.225.0.0/16
+  
+  add-user ryan ...
+  join-zone ryan APZ-production superadmin
+  
+  add-user intern ...
+  join-zone intern APZ-staging dev
+  
+
+================ Controller ==================
