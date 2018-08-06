@@ -1,10 +1,4 @@
-class Unity::EC2::VPC
-  
-  attr_reader :manager
-  
-  def initialize(manager)
-    @manager = manager
-  end
+class Unity::EC2::VPC < Unity::EC2::Base
   
   def list
     list = []
@@ -53,13 +47,16 @@ class Unity::EC2::VPC
     # short-circuit if this already exists
     existing = show(name)
     if existing
+      logger.info("VPC '#{name}' already exists")
       return existing
     end
     
     # create the vpc
+    logger.info("Creating VPC '#{name}'")
     vpc = create_vpc
     
     # tag the vpc
+    logger.info("Tagging VPC '#{name}'")
     tag_vpc(vpc['vpcId'], name)
     
     show(name)
@@ -68,9 +65,12 @@ class Unity::EC2::VPC
   protected
   
   def create_vpc
+    cidr = "10.#{subnet_int}.0.0/16"
+    logger.info "Found available network #{cidr}"
+    
     # create the vpc with a unique cidr block
     res = manager.CreateVpc(
-      'CidrBlock' => "10.#{subnet_int}.0.0/16"
+      'CidrBlock' => cidr
     )
     
     # extract the response

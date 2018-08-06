@@ -1,10 +1,4 @@
-class Unity::EC2::Subnet
-  
-  attr_reader :manager
-  
-  def initialize(manager)
-    @manager = manager
-  end
+class Unity::EC2::Subnet < Unity::EC2::Base
   
   def list(vpc)
     list = []
@@ -56,17 +50,23 @@ class Unity::EC2::Subnet
     # short-circuit if this already exists
     existing = show(vpc, name)
     if existing
+      logger.info "Subnet '#{name}' already exists"
       return existing
     end
     
     # create subnet
+    logger.info "Creating subnet '#{name}'"
     subnet = create_subnet(vpc, name)
     
     # tag subnet
+    logger.info "Tagging subnet '#{name}'"
     tag_subnet(vpc, subnet['subnetId'], name)
     
     # modify attributes
-    set_public(subnet["subnetId"]) if public
+    if public
+      logger.info "Enabling public interfaces on subnet"
+      set_public(subnet["subnetId"])
+    end
     
     show(vpc, name)
   end
@@ -75,13 +75,16 @@ class Unity::EC2::Subnet
   
   def create_subnet(vpc, name)
     # grab the subnet ints
-    vpc_subnet_int  = vpc[:subnet][/.+\.(.+)\..+\./, 1]
-    subnet_int      = subnet_int(vpc[:id])
+    vpc_subnet_int = vpc[:subnet][/.+\.(.+)\..+\./, 1]
+    subnet_int     = subnet_int(vpc[:id])
+    cidr           = "10.#{vpc_subnet_int}.#{subnet_int}.0/21"
+    
+    logger.info "Found available subnet #{cidr}"
     
     # create the subnet
     res = manager.CreateSubnet(
       'VpcId'     => vpc[:id],
-      'CidrBlock' => "10.#{vpc_subnet_int}.#{subnet_int}.0/21"
+      'CidrBlock' => cidr
     )
     
     # extract the response

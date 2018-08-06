@@ -6,10 +6,11 @@ class Unity::Client
   attr_reader :access_key
   attr_reader :endpoint
 
-  def initialize(key_id, access_key, endpoint)
+  def initialize(key_id, access_key, endpoint, logger=nil)
     @key_id     = key_id
     @access_key = access_key
     @endpoint   = endpoint
+    @logger     = logger
   end
 
   def verify
@@ -28,11 +29,11 @@ class Unity::Client
   
   def create_env(name)
     # create the adapters
-    vpc_adapter     = Unity::EC2::VPC.new(ec2_manager)
-    gateway_adapter = Unity::EC2::Gateway.new(ec2_manager)
-    subnet_adapter  = Unity::EC2::Subnet.new(ec2_manager)
-    acl_adapter     = Unity::EC2::ACL.new(ec2_manager)
-    route_adapter   = Unity::EC2::Route.new(ec2_manager)
+    vpc_adapter     = Unity::EC2::VPC.new(ec2_manager, logger)
+    gateway_adapter = Unity::EC2::Gateway.new(ec2_manager, logger)
+    subnet_adapter  = Unity::EC2::Subnet.new(ec2_manager, logger)
+    acl_adapter     = Unity::EC2::ACL.new(ec2_manager, logger)
+    route_adapter   = Unity::EC2::Route.new(ec2_manager, logger)
     
     # create vpc
     vpc = vpc_adapter.create(name)
@@ -44,7 +45,8 @@ class Unity::Client
     gateway = gateway_adapter.create(name)
     
     # attach gateway to the vpc
-    # gateway_adapter.attach(vpc[:id], gateway[:id])
+    # todo: make this idempotent
+    gateway_adapter.attach(vpc[:id], gateway[:id])
     
     # add vpc route table to internet gateway
     route_adapter.add_vpc_to_gateway(vpc[:id], gateway[:id])
@@ -65,10 +67,10 @@ class Unity::Client
     apz_acl = acl_adapter.create_apz(vpc, dmz, mgz)
     
     # attach DMZ acl to DMZ
-    acl_adapter.attach_subnet(dmz_acl[:id], dmz[:id])
+    acl_adapter.attach_subnet(dmz_acl, dmz)
     
     # attach MGZ acl to DMZ
-    acl_adapter.attach_subnet(mgz_acl[:id], mgz[:id])
+    acl_adapter.attach_subnet(mgz_acl, mgz)
     
     # return the vpc
     vpc
@@ -99,6 +101,12 @@ class Unity::Client
   end
     
   protected
+
+  def logger
+    @logger ||= begin
+      ::Unity::Logger::Stdout.new
+    end
+  end
 
   def ec2_manager
     @manager ||= begin

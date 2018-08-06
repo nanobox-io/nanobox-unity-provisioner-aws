@@ -1,9 +1,3 @@
-class Unity::EC2::IAM
-  
-  attr_reader :manager
-  
-  def initialize(manager)
-    @manager = manager
-  end
+class Unity::EC2::IAM < Unity::EC2::Base
   
 end

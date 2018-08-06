@@ -1,12 +1,7 @@
-class Unity::EC2::Route
-  
-  attr_reader :manager
-  
-  def initialize(manager)
-    @manager = manager
-  end
+class Unity::EC2::Route < Unity::EC2::Base
   
   def add_vpc_to_gateway(vpc_id, gateway_id)
+    
     # https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateRoute.html
     table = fetch_route_table(vpc_id)
     

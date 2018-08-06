@@ -1,10 +1,4 @@
-class Unity::EC2::Gateway
-  
-  attr_reader :manager
-  
-  def initialize(manager)
-    @manager = manager
-  end
+class Unity::EC2::Gateway < Unity::EC2::Base
   
   def list
     list = []

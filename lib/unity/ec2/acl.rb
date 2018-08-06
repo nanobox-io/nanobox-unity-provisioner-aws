@@ -1,10 +1,4 @@
-class Unity::EC2::ACL
-  
-  attr_reader :manager
-  
-  def initialize(manager)
-    @manager = manager
-  end
+class Unity::EC2::ACL < Unity::EC2::Base
   
   def list(vpc)
     list = []
@@ -56,20 +50,24 @@ class Unity::EC2::ACL
     # short-circuit if this already exists
     existing = show(vpc, 'DMZ')
     if existing
+      logger.info "ACL 'DMZ' already exists"
       return existing
     end
     
     # create the acl
+    logger.info "Creating ACL 'DMZ'"
     acl = create_acl(vpc[:id])
     
     # extract the ID for convenience
     acl_id = acl['networkAclId']
     
     # tag the acl with a name
+    logger.info "Tagging ACL"
     tag_acl(vpc, acl_id, 'DMZ')
     
     # create inbound rules
     # 
+    logger.info "Adding ingress rules to DMZ"
     # allow inbound to openvpn
     add_rule acl_id, :ingress, 100, '17', 1194, 1194, '0.0.0.0/0', 'allow'
     # allow returning packets from the vpc network
@@ -79,6 +77,7 @@ class Unity::EC2::ACL
     # 
     # create outbound rules
     # 
+    logger.info "Adding egress rules to DMZ"
     # at this point, let's keep it simple and let anything out
     add_rule acl_id, :egress, 200, '-1', 1, 65535, '0.0.0.0/0', 'allow'
     
@@ -89,20 +88,24 @@ class Unity::EC2::ACL
     # short-circuit if this already exists
     existing = show(vpc, 'MGZ')
     if existing
+      logger.info "ACL 'MGZ' already exists"
       return existing
     end
     
     # create the acl
+    logger.info "Creating ACL 'MGZ'"
     acl = create_acl(vpc[:id])
     
     # extract the ID for convenience
     acl_id = acl['networkAclId']
     
     # tag the acl with a name
+    logger.info "Tagging ACL"
     tag_acl(vpc, acl_id, 'MGZ')
     
     # create inbound rules
     # 
+    logger.info "Adding ingress rules to DMZ"
     # allow inbound from DMZ
     add_rule acl_id, :ingress, 100, '-1', 1, 65535, dmz[:subnet], 'allow'
     # allow returning packets from the vpc network
@@ -112,6 +115,7 @@ class Unity::EC2::ACL
     # 
     # create outbound rules
     # 
+    logger.info "Adding egress rules to DMZ"
     # at this point, let's keep it simple and let anything out
     add_rule acl_id, :egress, 200, '-1', 1, 65535, '0.0.0.0/0', 'allow'
     
@@ -122,20 +126,24 @@ class Unity::EC2::ACL
     # short-circuit if this already exists
     existing = show(vpc, "APZ")
     if existing
+      logger.info "ACL 'APZ' already exists"
       return existing
     end
     
     # create the acl
+    logger.info "Creating ACL 'APZ'"
     acl = create_acl(vpc[:id])
     
     # extract the ID for convenience
     acl_id = acl['networkAclId']
     
     # tag the acl with a name
+    logger.info "Tagging ACL"
     tag_acl(vpc, acl_id, "APZ")
     
     # create inbound rules
     # 
+    logger.info "Adding ingress rules to APZ"
     # allow inbound from anywhere for 80
     add_rule acl_id, :ingress, 100, '6', 80, 80, '0.0.0.0/0', 'allow'
     # allow inbound from anywhere for 443
@@ -149,13 +157,19 @@ class Unity::EC2::ACL
     # 
     # create outbound rules
     # 
+    logger.info "Adding egress rules to APZ"
     # at this point, let's keep it simple and let anything out
     add_rule acl_id, :egress, 200, '-1', 1, 65535, '0.0.0.0/0', 'allow'
     
     show(vpc, "APZ")
   end
   
-  def attach_subnet(acl_id, subnet_id)
+  def attach_subnet(acl, subnet)
+    acl_id    = acl[   :id]
+    subnet_id = subnet[:id]
+    
+    logger.info "Attaching subnet '#{subnet[:name]}' to ACL '#{acl[:name]}'"
+    
     # find the current association
     # filter the collection to just nanobox instances
     filter = [{'Name'  => 'association.subnet-id', 'Value' => subnet_id}]
