@@ -38,18 +38,14 @@ class Unity::Client
     # create vpc
     vpc = vpc_adapter.create(name)
     
-    # remove default subnets
-    # NOTE: is this necessary?
-    
     # create internet gateway
     gateway = gateway_adapter.create(name)
     
     # attach gateway to the vpc
-    # todo: make this idempotent
-    gateway_adapter.attach(vpc[:id], gateway[:id])
+    gateway_adapter.attach(vpc, gateway)
     
     # add vpc route table to internet gateway
-    route_adapter.add_vpc_to_gateway(vpc[:id], gateway[:id])
+    route_adapter.add_vpc_to_gateway(vpc, gateway)
     
     # create DMZ subnet
     dmz = subnet_adapter.create(vpc, 'DMZ')

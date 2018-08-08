@@ -1,14 +1,15 @@
 class Unity::EC2::Route < Unity::EC2::Base
   
-  def add_vpc_to_gateway(vpc_id, gateway_id)
+  def add_vpc_to_gateway(vpc, gateway)
     
-    # https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateRoute.html
-    table = fetch_route_table(vpc_id)
+    table = fetch_route_table(vpc[:id])
     
+    # add an internet accessible route
+    logger.info "Adding internet accessable route for VPC '#{vpc[:name]}'"
     res = manager.CreateRoute(
       'RouteTableId'          => table['routeTableId'],
       'DestinationCidrBlock'  => '0.0.0.0/0',
-      'GatewayId'             => gateway_id
+      'GatewayId'             => gateway[:id]
     )
     
     res["CreateRouteResponse"]["return"]

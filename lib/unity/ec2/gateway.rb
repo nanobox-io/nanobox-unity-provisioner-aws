@@ -47,24 +47,35 @@ class Unity::EC2::Gateway < Unity::EC2::Base
     # short-circuit if this already exists
     existing = show(name)
     if existing
+      logger.info "Internet Gateway '#{name}' already exists"
       return existing
     end
     
     # create the gateway
+    logger.info("Creating Internet Gateway '#{name}'")
     gateway = create_gateway(name)
     
     # tag the gateway
+    logger.info("Tagging Internet Gateway '#{name}'")
     tag_gateway(gateway['internetGatewayId'], name)
     
     # process the gateway
     process(gateway)
   end
   
-  def attach(vpc_id, id)
+  def attach(vpc, gateway)
+    # short-circuit if this already exists
+    if gateway[:attached_vpcs].include? vpc[:id]
+      logger.info "Internet Gateway '#{gateway[:name]}' already attached to VPC '#{vpc[:name]}'"
+      return true
+    end
+    
+    
     # attach the gateway to the vpc
+    logger.info "Attaching Internet Gateway '#{gateway[:name]}' to VPC '#{vpc[:name]}'"
     res = manager.AttachInternetGateway(
-      'InternetGatewayId' => id,
-      'VpcId'             => vpc_id
+      'InternetGatewayId' => gateway[:id],
+      'VpcId'             => vpc[:id]
     )
     
     # find out if it was attached
@@ -104,8 +115,9 @@ class Unity::EC2::Gateway < Unity::EC2::Base
   
   def process(data)
     {
-      id:     data["internetGatewayId"],
-      name:   (process_tag(data['tagSet']['item'], 'EnvName') rescue 'unknown'),
+      id:             data["internetGatewayId"],
+      name:           (process_tag(data['tagSet']['item'], 'EnvName') rescue 'unknown'),
+      attached_vpcs:  extract_attached_vpc_ids(data['attachmentSet'])
     }
   end
   
@@ -116,6 +128,22 @@ class Unity::EC2::Gateway < Unity::EC2::Base
       end
     end
     ''
+  end
+  
+  def extract_attached_vpc_ids(set)
+    return [] if set.nil?
+    
+    collection = begin
+      if set['item'].is_a? Array
+        set['item']
+      else
+        [set['item']]
+      end
+    end
+    
+    collection.map do |attachment|
+      attachment['vpcId']
+    end
   end
   
 end
