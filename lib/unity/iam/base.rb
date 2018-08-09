@@ -1,4 +1,4 @@
-class Unity::EC2::Base
+class Unity::IAM::Base
   
   attr_reader :manager
   attr_reader :logger

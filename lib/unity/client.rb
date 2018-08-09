@@ -20,11 +20,11 @@ class Unity::Client
   end
   
   def envs
-    Unity::EC2::VPC.new(ec2_manager).list
+    Unity::EC2::VPC.new(ec2_manager, logger).list
   end
   
   def env(name)
-    Unity::EC2::VPC.new(ec2_manager).show(name)
+    Unity::EC2::VPC.new(ec2_manager, logger).show(name)
   end
   
   def create_env(name)
@@ -73,27 +73,46 @@ class Unity::Client
   end
   
   def zones(env_name)
+    # find the vpc
+    vpc = Unity::EC2::VPC.new(ec2_manager, logger).show(env_name)
+    
+    if vpc.nil?
+      return nil
+    end
+    
+    Unity::EC2::Subnet.new(ec2_manager, logger).list(vpc)
   end
   
   def zone(env_name, zone_name)
+    vpc = Unity::EC2::VPC.new(ec2_manager, logger).show(env_name)
+    
+    Unity::EC2::Subnet.new(ec2_manager, logger).show(vpc, zone_name)
   end
   
   def create_zone(env_name, zone_name)
+    # create the adapters
+    vpc_adapter    = Unity::EC2::VPC.new(ec2_manager, logger)
+    subnet_adapter = Unity::EC2::Subnet.new(ec2_manager, logger)
+    acl_adapter    = Unity::EC2::ACL.new(ec2_manager, logger)
+    policy_adapter = Unity::IAM::Policy.new(iam_manager, logger)
+    
     # load vpc
+    vpc = vpc_adapter.show(env_name)
+    
+    if vpc.nil?
+      return nil
+    end
     
     # create subnet
+    apz = subnet_adapter.create(vpc, "APZ-#{zone_name}")
     
-    # load dmz
-    
-    # load mgz
-    
-    # create APZ acl
+    # load the APZ acl
+    acl = acl_adapter.show(vpc, 'APZ')
     
     # attach APZ acl
+    acl_adapter.attach_subnet(acl, apz)
     
-    # create IAM profile
-    
-    # create IAM user
+    apz
   end
     
   protected
@@ -105,8 +124,14 @@ class Unity::Client
   end
 
   def ec2_manager
-    @manager ||= begin
+    @ec2_manager ||= begin
       ::RightScale::CloudApi::AWS::EC2::Manager.new(key_id, access_key, endpoint_uri, :api_version => "2016-11-15")
+    end
+  end
+  
+  def iam_manager
+    @iam_manager ||= begin
+      ::RightScale::CloudApi::AWS::IAM::Manager.new(key_id, access_key, 'https://iam.amazonaws.com', :api_version => "2010-05-08")
     end
   end
 
