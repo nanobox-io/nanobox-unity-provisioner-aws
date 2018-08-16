@@ -10,12 +10,17 @@ require 'bundler/setup'
 
 require 'unity'
 
+def prompt(message)
+  print "#{message}: "
+  gets.strip
+end
+
 # meta
-key_id     = ENV['AWS_ACCESS_KEY_ID']
-access_key = ENV['AWS_SECRET_ACCESS_KEY']
-endpoint   = ARGV[0]
-env_name   = ARGV[1]
-zone_name  = ARGV[2]
+key_id     = ENV['AWS_ACCESS_KEY_ID'] || prompt("AWS access key id")
+access_key = ENV['AWS_SECRET_ACCESS_KEY'] || prompt("AWS secret access key")
+endpoint   = ARGV[0] || prompt("Region endpoint (ie: us-east-2)")
+env_name   = ARGV[1] || prompt("Env name")
+zone_name  = ARGV[2] || prompt("Zone name")
 
 client = Unity::Client.new(key_id, access_key, endpoint)
 
