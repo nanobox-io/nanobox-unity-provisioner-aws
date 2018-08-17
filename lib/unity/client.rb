@@ -33,6 +33,7 @@ class Unity::Client
     gateway_adapter = Unity::EC2::Gateway.new(ec2_manager, logger)
     subnet_adapter  = Unity::EC2::Subnet.new(ec2_manager, logger)
     acl_adapter     = Unity::EC2::ACL.new(ec2_manager, logger)
+    sg_adapter      = Unity::EC2::SecurityGroup.new(ec2_manager, logger)
     route_adapter   = Unity::EC2::Route.new(ec2_manager, logger)
     
     # create vpc
@@ -61,6 +62,12 @@ class Unity::Client
     
     # create the APZ acl
     apz_acl = acl_adapter.create_apz(vpc, dmz, mgz)
+    
+    # create the DMZ security group
+    dmz_sg = sg_adapter.create_dmz(vpc)
+    
+    # create the MGZ security group
+    mgz_sg = sg_adapter.create_mgz(vpc, dmz)
     
     # attach DMZ acl to DMZ
     acl_adapter.attach_subnet(dmz_acl, dmz)
@@ -95,6 +102,7 @@ class Unity::Client
     subnet_adapter = Unity::EC2::Subnet.new(ec2_manager, logger)
     acl_adapter    = Unity::EC2::ACL.new(ec2_manager, logger)
     policy_adapter = Unity::IAM::Policy.new(iam_manager, logger)
+    sg_adapter     = Unity::EC2::SecurityGroup.new(ec2_manager, logger)
     
     # load vpc
     vpc = vpc_adapter.show(env_name)
@@ -105,6 +113,15 @@ class Unity::Client
     
     # create subnet
     apz = subnet_adapter.create(vpc, "APZ-#{zone_name}")
+    
+    # load the dmz
+    dmz = subnet_adapter.show(vpc, 'DMZ')
+    
+    # load the mgz
+    mgz = subnet_adapter.show(vpc, 'MGZ')
+    
+    # create security group
+    sg = sg_adapter.create_apz(vpc, dmz, mgz, "APZ-#{zone_name}")
     
     # load the APZ acl
     acl = acl_adapter.show(vpc, 'APZ')

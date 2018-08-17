@@ -8,4 +8,15 @@ class Unity::EC2::Base
     @logger  = logger
   end
   
+  protected
+  
+  def process_tag(tags, key)
+    tags.each do |tag|
+      if tag['key'] == key
+        return tag['value']
+      end
+    end
+    ''
+  end
+  
 end

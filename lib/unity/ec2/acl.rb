@@ -68,17 +68,13 @@ class Unity::EC2::ACL < Unity::EC2::Base
     # create inbound rules
     # 
     logger.info "Adding ingress rules to DMZ"
-    # allow inbound to openvpn
-    add_rule acl_id, :ingress, 100, '17', 1194, 1194, '0.0.0.0/0', 'allow'
-    # allow returning packets from the vpc network
-    add_rule acl_id, :ingress, 110, '6', 32768, 65535, vpc[:subnet], 'allow'
-    # deny all other inbound traffic
-    add_rule acl_id, :ingress, 200, '-1', 1, 65535, '0.0.0.0/0', 'deny'
+    # allow all inbound traffic
+    add_rule acl_id, :ingress, 200, '-1', 1, 65535, '0.0.0.0/0', 'allow'
     # 
     # create outbound rules
     # 
     logger.info "Adding egress rules to DMZ"
-    # at this point, let's keep it simple and let anything out
+    # allow all outbound traffic
     add_rule acl_id, :egress, 200, '-1', 1, 65535, '0.0.0.0/0', 'allow'
     
     show(vpc, 'DMZ')
@@ -106,17 +102,13 @@ class Unity::EC2::ACL < Unity::EC2::Base
     # create inbound rules
     # 
     logger.info "Adding ingress rules to DMZ"
-    # allow inbound from DMZ
-    add_rule acl_id, :ingress, 100, '-1', 1, 65535, dmz[:subnet], 'allow'
-    # allow returning packets from the vpc network
-    add_rule acl_id, :ingress, 110, '6', 32768, 65535, vpc[:subnet], 'allow'
-    # deny all other inbound traffic
-    add_rule acl_id, :ingress, 200, '-1', 1, 65535, '0.0.0.0/0', 'deny'
+    # allow all inbound traffic
+    add_rule acl_id, :ingress, 200, '-1', 1, 65535, '0.0.0.0/0', 'allow'
     # 
     # create outbound rules
     # 
     logger.info "Adding egress rules to DMZ"
-    # at this point, let's keep it simple and let anything out
+    # allow all outbound traffic
     add_rule acl_id, :egress, 200, '-1', 1, 65535, '0.0.0.0/0', 'allow'
     
     show(vpc, 'MGZ')
@@ -143,22 +135,14 @@ class Unity::EC2::ACL < Unity::EC2::Base
     
     # create inbound rules
     # 
-    logger.info "Adding ingress rules to APZ"
-    # allow inbound from anywhere for 80
-    add_rule acl_id, :ingress, 100, '6', 80, 80, '0.0.0.0/0', 'allow'
-    # allow inbound from anywhere for 443
-    add_rule acl_id, :ingress, 110, '6', 443, 443, '0.0.0.0/0', 'allow'
-    # allow anything from the DMZ
-    add_rule acl_id, :ingress, 150, '-1', 1, 65535, dmz[:subnet], 'allow'
-    # allow anything from the MGZ
-    add_rule acl_id, :ingress, 160, '-1', 1, 65535, mgz[:subnet], 'allow'
-    # deny all other inbound traffic
-    add_rule acl_id, :ingress, 200, '-1', 1, 65535, '0.0.0.0/0', 'deny'
+    logger.info "Adding ingress rules to DMZ"
+    # allow all inbound traffic
+    add_rule acl_id, :ingress, 200, '-1', 1, 65535, '0.0.0.0/0', 'allow'
     # 
     # create outbound rules
     # 
-    logger.info "Adding egress rules to APZ"
-    # at this point, let's keep it simple and let anything out
+    logger.info "Adding egress rules to DMZ"
+    # allow all outbound traffic
     add_rule acl_id, :egress, 200, '-1', 1, 65535, '0.0.0.0/0', 'allow'
     
     show(vpc, "APZ")
