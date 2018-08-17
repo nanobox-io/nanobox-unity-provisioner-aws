@@ -189,7 +189,7 @@ class Unity::EC2::SecurityGroup < Unity::EC2::Base
       id: data['groupId'],
       name: (process_tag(data['tagSet']['item'], 'FirewallName') rescue 'unknown'),
       ingress: (process_rules(data['ipPermissions']) rescue 'na'),
-      egress: (process_rules(data['ipPermissionsEgress']) rescue 'na)'
+      egress: (process_rules(data['ipPermissionsEgress']) rescue 'na')
     }
   end
   
