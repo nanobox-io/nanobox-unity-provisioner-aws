@@ -77,7 +77,7 @@ class Unity::EC2::SecurityGroup < Unity::EC2::Base
     show(vpc, 'DMZ')
   end
   
-  def create_mgz(vpc, dmz)
+  def create_mgz(vpc, dmzs, mgzs)
     # short-circuit if this already exists
     existing = show(vpc, 'MGZ')
     if existing
@@ -99,13 +99,19 @@ class Unity::EC2::SecurityGroup < Unity::EC2::Base
     # create inbound rules
     # 
     logger.info "Adding ingress rules to MGZ"
-    # allow anything from the dmz
-    add_rule sg_id, '-1', -1, -1, dmz[:subnet]
+    # allow anything from the dmz subnets
+    dmzs.each do |dmz|
+      add_rule sg_id, '-1', -1, -1, dmz[:subnet]
+    end
+    # allow anything from the other mgz subnets
+    mgzs.each do |mgz|
+      add_rule sg_id, '-1', -1, -1, mgz[:subnet]
+    end
     
     show(vpc, 'MGZ')
   end
   
-  def create_apz(vpc, dmz, mgz, name)
+  def create_apz(vpc, dmzs, mgzs, apzs, name)
     # short-circuit if this already exists
     existing = show(vpc, name)
     if existing
@@ -127,10 +133,18 @@ class Unity::EC2::SecurityGroup < Unity::EC2::Base
     # create inbound rules
     # 
     logger.info "Adding ingress rules to '#{name}'"
-    # allow anything from the dmz
-    add_rule sg_id, '-1', -1, -1, dmz[:subnet]
-    # allow anything from the mgz
-    add_rule sg_id, '-1', -1, -1, mgz[:subnet]
+    # allow anything from the dmz subnets
+    dmzs.each do |dmz|
+      add_rule sg_id, '-1', -1, -1, dmz[:subnet]
+    end
+    # allow anything from the mgz subnets
+    mgzs.each do |mgz|
+      add_rule sg_id, '-1', -1, -1, mgz[:subnet]
+    end
+    # allow anything from the other apz subnets
+    apzs.each do |apz|
+      add_rule sg_id, '-1', -1, -1, apz[:subnet]
+    end
     # allow http from anywhere
     add_rule sg_id, '6', 80, 80, '0.0.0.0/0'
     # allow https from anywhere

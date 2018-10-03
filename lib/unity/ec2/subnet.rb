@@ -46,29 +46,43 @@ class Unity::EC2::Subnet < Unity::EC2::Base
     nil
   end
   
-  def create(vpc, name, public=true)
-    # short-circuit if this already exists
-    existing = show(vpc, name)
-    if existing
-      logger.info "Subnet '#{name}' already exists"
-      return existing
+  def show_all(vpc, name)
+    list(vpc).keep_if do |subnet|
+      subnet[:name] =~ /^#{name}/
     end
-    
-    # create subnet
-    logger.info "Creating subnet '#{name}'"
-    subnet = create_subnet(vpc, name)
-    
-    # tag subnet
-    logger.info "Tagging subnet '#{name}'"
-    tag_subnet(vpc, subnet['subnetId'], name)
-    
-    # modify attributes
-    if public
-      logger.info "Enabling public interfaces on subnet"
-      set_public(subnet["subnetId"])
+  end
+  
+  def create(vpc, name, zones, public=true)
+    zones.map do |zone|
+      # update the name to include the zone
+      zone_id = zone[:name].split('-').last
+      
+      # append the name
+      fq_name = "#{name}-#{zone_id}"
+      
+      # short-circuit if this already exists
+      existing = show(vpc, fq_name)
+      if existing
+        logger.info "Subnet '#{fq_name}' already exists"
+      else
+        # create subnet
+        logger.info "Creating subnet '#{fq_name}'"
+        subnet = create_subnet(vpc, fq_name)
+        
+        # tag subnet
+        logger.info "Tagging subnet '#{fq_name}'"
+        tag_subnet(vpc, subnet['subnetId'], fq_name)
+        
+        # modify attributes
+        if public
+          logger.info "Enabling public interfaces on subnet"
+          set_public(subnet["subnetId"])
+        end
+      end
+      
+      # return the subnet
+      show(vpc, fq_name)
     end
-    
-    show(vpc, name)
   end
   
   protected

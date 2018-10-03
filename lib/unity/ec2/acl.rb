@@ -80,7 +80,7 @@ class Unity::EC2::ACL < Unity::EC2::Base
     show(vpc, 'DMZ')
   end
   
-  def create_mgz(vpc, dmz)
+  def create_mgz(vpc)
     # short-circuit if this already exists
     existing = show(vpc, 'MGZ')
     if existing
@@ -114,7 +114,7 @@ class Unity::EC2::ACL < Unity::EC2::Base
     show(vpc, 'MGZ')
   end
   
-  def create_apz(vpc, dmz, mgz)
+  def create_apz(vpc)
     # short-circuit if this already exists
     existing = show(vpc, "APZ")
     if existing
@@ -148,8 +148,14 @@ class Unity::EC2::ACL < Unity::EC2::Base
     show(vpc, "APZ")
   end
   
+  def attach_subnets(acl, subnets)
+    subnets.each do |subnet|
+      attach_subnet(acl, subnet)
+    end
+  end
+  
   def attach_subnet(acl, subnet)
-    acl_id    = acl[   :id]
+    acl_id    = acl[:id]
     subnet_id = subnet[:id]
     
     logger.info "Attaching subnet '#{subnet[:name]}' to ACL '#{acl[:name]}'"

@@ -1,8 +1,5 @@
 FROM ruby:2.3-alpine
 
-# convenience ARGs from nbx
-ARG DEV_PATH
-
 # set some ARGs for ssh key management
 ARG SSH_KEY_PUB
 ARG SSH_KEY_PRIV
@@ -26,7 +23,7 @@ RUN apk update && \
       libxml2-dev
       
 # set the ssh key (normally we'd NOT persist this, but since this is dev we're ok)
-COPY ${DEV_PATH}/.ssh /root/.ssh
+COPY .docker/dev/.ssh /root/.ssh
 RUN echo "$SSH_KEY_PRIV" > /root/.ssh/id_rsa && \
     echo "$SSH_KEY_PUB" > /root/.ssh/id_rsa.pub && \
     chmod 700 /root/.ssh && \

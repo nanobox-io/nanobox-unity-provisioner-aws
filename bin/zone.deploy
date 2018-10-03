@@ -24,8 +24,10 @@ zone_name  = ARGV[2] || prompt("Zone name")
 
 client = Unity::Client.new(key_id, access_key, endpoint)
 
-zone = client.create_zone(env_name, zone_name)
+subnets = client.create_zone(env_name, zone_name)
 
-puts "#{zone[:name]} : 
-  subnet : #{zone[:subnet]}
-  "
+puts "APZ-#{zone_name} : "
+
+subnets.each do |subnet|
+  puts "  subnet : #{subnet[:subnet]}"
+end
