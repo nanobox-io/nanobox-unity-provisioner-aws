@@ -67,7 +67,7 @@ class Unity::EC2::Subnet < Unity::EC2::Base
       else
         # create subnet
         logger.info "Creating subnet '#{fq_name}'"
-        subnet = create_subnet(vpc, fq_name)
+        subnet = create_subnet(vpc, zone, fq_name)
         
         # tag subnet
         logger.info "Tagging subnet '#{fq_name}'"
@@ -87,7 +87,7 @@ class Unity::EC2::Subnet < Unity::EC2::Base
   
   protected
   
-  def create_subnet(vpc, name)
+  def create_subnet(vpc, zone, name)
     # grab the subnet ints
     vpc_subnet_int = vpc[:subnet][/.+\.(.+)\..+\./, 1]
     subnet_int     = subnet_int(vpc[:id])
@@ -98,7 +98,8 @@ class Unity::EC2::Subnet < Unity::EC2::Base
     # create the subnet
     res = manager.CreateSubnet(
       'VpcId'     => vpc[:id],
-      'CidrBlock' => cidr
+      'CidrBlock' => cidr,
+      'AvailabilityZone' => zone[:name]
     )
     
     # extract the response
